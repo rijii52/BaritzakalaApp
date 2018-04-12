@@ -188,6 +188,8 @@ class ActiveTraining extends Component {
 
     this.startRace = this.startRace.bind(this);
     this.stopRace = this.stopRace.bind(this);
+    this.onSpeedUp = this.onSpeedUp.bind(this);
+    this.onSpeedDown = this.onSpeedDown.bind(this);
 
     this.styles = StyleSheet.create({
       theblock: {
@@ -353,13 +355,73 @@ class ActiveTraining extends Component {
       raceDistanceColor.color = "white";
     }
 
+    var speedInput = this.getSpeedInput();
+
     return (
       <View style={this.styles.ctrls_row}>
-        <Text style={this.styles.ctrl_elem}>{this.state.speed}</Text>
+        <View style={[this.styles.ctrl_elem, {alignItems:'center'}]}>
+          {speedInput}
+        </View>
         <Text style={[this.styles.ctrl_elem, raceTimeColor]}>{SecondsToTimeFormat(this.state.time)}</Text>
         <Text style={[this.styles.ctrl_elem, raceDistanceColor]}>{this.state.distance}</Text>
       </View>
     );
+  }
+
+  getSpeedInput() {
+    var inputStyles = StyleSheet.create({
+        theinput: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderStyle: 'solid',
+          borderWidth: 1,
+          borderColor: 'white',
+          padding: 0
+        },
+        touch: {
+          width: 30
+        },
+        button: {
+          textAlign: 'center',
+          backgroundColor: '#455A64',
+          fontSize: 20,
+          color: 'white',
+        },
+        value: {
+          textAlign: 'center',
+          fontSize: 20,
+          color: 'white',
+          marginLeft: 5,
+          marginRight: 5
+        }   
+      });
+
+    return (
+      <View style={inputStyles.theinput}>
+        <TouchableHighlight style={inputStyles.touch} onPress={this.onSpeedDown}>
+          <Text style={inputStyles.button}>-</Text>
+        </TouchableHighlight>
+        <Text style={inputStyles.value}>{this.state.speed.toFixed(1)}</Text>
+        <TouchableHighlight style={inputStyles.touch} onPress={this.onSpeedUp}>
+          <Text style={inputStyles.button}>+</Text>
+        </TouchableHighlight>
+      </View>
+    );
+  }
+
+  onSpeedUp () {
+    var newSpeed = Math.round((this.state.speed + 0.1) * 10) / 10;
+    this.setState({
+      speed: newSpeed
+    });
+  }
+
+  onSpeedDown () {
+    var newSpeed = Math.round((this.state.speed - 0.1) * 10) / 10;
+    this.setState({
+      speed: newSpeed
+    });
   }
 
   getButtonRow () {
