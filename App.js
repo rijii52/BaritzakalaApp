@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image } from 'react-native';
 
+const RaceTimeQuant = 15;
+
 function SecondsToTimeFormat(seconds) {
   if (seconds.isNull || seconds.isNaN)
     return "";
@@ -180,7 +182,8 @@ class ActiveTraining extends Component {
 
     this.state = {
       time: 0,
-      speed: 8.6
+      speed: 8.6,
+      distance: 0
     };
 
     this.startRace = this.startRace.bind(this);
@@ -188,33 +191,39 @@ class ActiveTraining extends Component {
 
     this.styles = StyleSheet.create({
       theblock: {
-        flex: 5,
+        flex: 6,
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center'
       },
       labels_row: {
-        flex: 1,
         flexDirection: 'row',
         justifyContent: 'center'
+      },
+      label: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 14,
+        marginTop: 24,
+        marginBottom: 5,
+        color: 'white'
       },
       ctrls_row: {
-        flex: 1,
         flexDirection: 'row',
-        justifyContent: 'center'
-      },
-      button_row: {
-        flex: 4,
         justifyContent: 'center'
       },
       ctrl_elem: {
         flex: 1,
         textAlign: 'center',
         fontSize: 20,
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: 'white',
         color: 'white'
+      },
+      button_row: {
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 40
       },
       touch: {
         width: '50%'
@@ -226,20 +235,48 @@ class ActiveTraining extends Component {
         borderWidth: 1,
         borderColor: 'white',
         borderRadius: 5,
-        padding: 20,
+        padding: 30,
         backgroundColor: '#455A64'
       },
       buttontext: {
         fontSize: 20,
         color: 'white',
-      }      
+      },
+      racelist: {
+        width: '100%'
+      },
+      racelist_row: {
+        flexDirection: 'row',
+        justifyContent: 'center'        
+      },
+      racelist_hd: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 14,
+        color: 'white',
+        marginBottom: 6
+      },
+      raceslist_td: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'white',
+        marginBottom: 4
+      },
+      noracesyet: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'lightgray',
+        marginTop: 20
+      }
     });
   }
 
   startRace () {
     let startRaceTime = 0;
-    while (startRaceTime < this.props.trainingTime + 15) {
-      startRaceTime += 30;
+    while (startRaceTime <= this.props.trainingTime) {
+      startRaceTime += RaceTimeQuant;
     }
     let timeAhead = startRaceTime - this.props.trainingTime;
 
@@ -247,7 +284,8 @@ class ActiveTraining extends Component {
 
     this.setState({
       start: startRaceTime,
-      time: timeAhead
+      time: timeAhead,
+      distance: 0
     });
 
     this.timeID = setInterval(
@@ -264,7 +302,6 @@ class ActiveTraining extends Component {
       var stoptime = this.state.start + this.state.time;
       var distance = parseInt(this.state.speed * 1000 / 3600 * this.state.time, 10);
       
-      /*
       this.props.addRace({
         start: this.state.start,
         stop: stoptime,
@@ -272,13 +309,13 @@ class ActiveTraining extends Component {
         speed: this.state.speed,
         distance: distance
       });
-      */
     }
 
     this.props.updateRunningStatus("walking");
   
     this.setState({
-      time: 0
+      time: 0,
+      distance: 0
     });
   }
 
@@ -289,8 +326,10 @@ class ActiveTraining extends Component {
       }));
     }
     else {
+      var distance = parseInt(this.state.speed * 1000 / 3600 * (this.state.time + 1), 10);
       this.setState((prevState, props) => ({
-        time: prevState.time + 1
+        time: prevState.time + 1,
+        distance: distance
       }));
     }
 
@@ -303,17 +342,22 @@ class ActiveTraining extends Component {
     var raceTimeColor = {
       color: 'lightgray'
     }
+    var raceDistanceColor = {
+      color: 'lightgray'
+    }
 
     if (this.props.runningStatus === "starting")
       raceTimeColor.color = "red";
-    else if (this.props.runningStatus === "running")
+    else if (this.props.runningStatus === "running") {
       raceTimeColor.color = "lime";
+      raceDistanceColor.color = "white";
+    }
 
     return (
       <View style={this.styles.ctrls_row}>
         <Text style={this.styles.ctrl_elem}>{this.state.speed}</Text>
         <Text style={[this.styles.ctrl_elem, raceTimeColor]}>{SecondsToTimeFormat(this.state.time)}</Text>
-        <Text style={this.styles.ctrl_elem}>0</Text>
+        <Text style={[this.styles.ctrl_elem, raceDistanceColor]}>{this.state.distance}</Text>
       </View>
     );
   }
@@ -343,27 +387,70 @@ class ActiveTraining extends Component {
     }
   }
 
+  getRacesList() {
+    var lisContent = this.getRacesListContent();
+    
+    return (
+      <View style={this.styles.racelist}>
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.racelist_hd}>Start</Text>
+          <Text style={this.styles.racelist_hd}>Stop</Text>
+          <Text style={this.styles.racelist_hd}>Time</Text>
+          <Text style={this.styles.racelist_hd}>Speed</Text>
+          <Text style={this.styles.racelist_hd}>Distance</Text>
+        </View>
+        {lisContent}
+      </View>
+    );
+  }
+
+  getRacesListContent () {
+    if (this.props.races.length > 0) {
+
+      const racesList = this.props.races.map((element) =>
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.start)}</Text>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.stop)}</Text>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.time)}</Text>
+          <Text style={this.styles.raceslist_td}>{element.speed.toFixed(1)}</Text>
+          <Text style={this.styles.raceslist_td}>{element.distance}</Text>
+        </View>
+      );
+      
+      return racesList;
+    }
+    else {
+      return ( 
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.noracesyet}>There was no races yet</Text>
+        </View>
+      );
+    }
+  }
+
   render () {
     var raceDateRow = this.getRaceDataRow();
     var buttonRow = this.getButtonRow();
+    var racesList = this.getRacesList();
 
     return (
       <View style={this.styles.theblock}>
         <View style={this.styles.labels_row}>
-          <Text style={this.styles.ctrl_elem}>Running Time</Text>
-          <Text style={this.styles.ctrl_elem}>Running Distance</Text>
+          <Text style={this.styles.label}>Running Time</Text>
+          <Text style={this.styles.label}>Running Distance</Text>
         </View>
-        <View style={this.styles.ctrls_row}>
+        <View style={[this.styles.ctrls_row, {marginBottom:16}]}>
           <Text style={this.styles.ctrl_elem}>{SecondsToTimeFormat(this.props.runningTime)}</Text>
           <Text style={this.styles.ctrl_elem}>{this.props.runningDistance}</Text>
         </View>
         <View style={this.styles.labels_row}>
-          <Text style={this.styles.ctrl_elem}>Race Speed</Text>
-          <Text style={this.styles.ctrl_elem}>Race Time</Text>
-          <Text style={this.styles.ctrl_elem}>Race Distance</Text>
+          <Text style={this.styles.label}>Race Speed</Text>
+          <Text style={this.styles.label}>Race Time</Text>
+          <Text style={this.styles.label}>Race Distance</Text>
         </View>
         {raceDateRow}
         {buttonRow}
+        {racesList}
       </View>
     );
   }
@@ -408,6 +495,7 @@ export default class App extends Component {
     this.updateRunningStatus = this.updateRunningStatus.bind(this);
     this.finishTaraining = this.finishTaraining.bind(this);
     this.storeTaraining = this.storeTaraining.bind(this);
+    this.addRace = this.addRace.bind(this);
 
     this.styles = StyleSheet.create({
       appcontainer: {
@@ -447,6 +535,19 @@ export default class App extends Component {
     });
   }
 
+  addRace(raceData) {
+
+    var updatedRaces = this.state.races.slice();
+    updatedRaces.push(raceData);
+    var updatedRunningTime = this.state.runningTime + raceData.time;
+    var updatedRunningDistance = this.state.runningDistance + raceData.distance;
+    this.setState({
+      races: updatedRaces,
+      runningTime: updatedRunningTime,
+      runningDistance: updatedRunningDistance
+    });
+  }
+  
   finishTaraining () {
     clearInterval(this.timeID);
     this.setState({
