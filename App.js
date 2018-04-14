@@ -138,32 +138,32 @@ class TopControlBlock extends Component {
 
 class WelcomeBlock extends Component {
 
-constructor(props) {
-  super(props);
+  constructor(props) {
+    super(props);
 
-  this.styles = StyleSheet.create({
-    theblock: {
-      flex: 5,
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    welcome: {
-      fontSize: 24,
-      color: 'white'
-    },
-    image: {
-      marginTop: 30,
-      marginBottom: 30
-    },
-    instruction: {
-      fontSize: 18,
-      lineHeight: 32,
-      color: 'white',
-      width: '80%',
-      textAlign: 'center'
-    }
-  });
-}
+    this.styles = StyleSheet.create({
+      theblock: {
+        flex: 5,
+        justifyContent: 'center',
+        alignItems: 'center'
+      },
+      welcome: {
+        fontSize: 24,
+        color: 'white'
+      },
+      image: {
+        marginTop: 30,
+        marginBottom: 30
+      },
+      instruction: {
+        fontSize: 18,
+        lineHeight: 32,
+        color: 'white',
+        width: '80%',
+        textAlign: 'center'
+      }
+    });
+  }
 
   render () {
     return (
@@ -173,6 +173,149 @@ constructor(props) {
         <Text style={this.styles.instruction}>Click the button "Start Training"{'\n'}to start training.{'\n'}Did you expect something else?</Text>
       </View>
     );
+  }
+}
+
+class SpeedInput extends Component {
+
+  constructor(props) {
+    super(props);
+
+    this.onUp = this.onUp.bind(this);
+    this.onUpIn = this.onUpIn.bind(this);
+    this.onUpOut = this.onUpOut.bind(this);
+    this.onDown = this.onDown.bind(this);
+    this.onDownIn = this.onDownIn.bind(this);
+    this.onDownOut = this.onDownOut.bind(this);
+  }
+
+  valueUp () {
+    var newValue = Math.round((this.props.value + this.props.step) * 10) / 10;
+    this.props.onValueChanged(newValue);
+  }
+
+  onUp () {
+    this.valueUp();
+  }
+
+  onUpIn () {
+    this.upTickCounter = 0;
+    this.upTimer = setInterval(
+      () => this.upTick(),
+      100
+    );
+  }
+
+  onUpOut () {
+    clearInterval(this.upTimer);
+  }
+
+  upTick() {
+    this.upTickCounter++;
+    if (this.upTickCounter > 3 && (this.upTickCounter % 3 == 0)) {
+      this.valueUp();
+    }
+  }
+
+  valueDown () {
+    var newValue = Math.round((this.props.value - this.props.step) * 10) / 10;
+    this.props.onValueChanged(newValue);
+  }
+  
+  onDown () {
+    this.valueDown();
+  }
+ 
+  onDownIn () {
+    this.downTickCounter = 0;
+    this.downTimer = setInterval(
+      () => this.downTick(),
+      100
+    );
+  }
+
+  onDownOut () {
+    clearInterval(this.downTimer);
+  }
+
+  downTick() {
+    this.downTickCounter++;
+    if (this.downTickCounter > 3 && (this.downTickCounter % 3 == 0)) {
+      this.valueDown();
+    }
+  }
+  
+  render () {
+      var inputStyles = StyleSheet.create({
+        theinput: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderStyle: 'solid',
+          borderWidth: 1,
+          padding: 0
+        },
+        touch: {
+          width: 30
+        },
+        button: {
+          textAlign: 'center',
+          backgroundColor: '#455A64',
+          fontSize: 20
+        },
+        value: {
+          textAlign: 'center',
+          fontSize: 20,
+          color: 'white',
+          marginLeft: 5,
+          marginRight: 5
+        }   
+      });
+
+      var enColors = StyleSheet.create({
+        theinput: {
+          borderColor: 'white'
+        },
+        button: {
+          color: 'white'
+        }
+      });
+    
+      var disColors = StyleSheet.create({
+        theinput: {
+          borderColor: 'gray'
+        },
+        button: {
+          color: 'gray'
+        }            
+      });
+
+      if (this.props.disabled) {
+        return (
+          <View style={[inputStyles.theinput, disColors.theinput]}>
+            <TouchableHighlight style={inputStyles.touch}>
+              <Text style={[inputStyles.button, disColors.button]}>-</Text>
+            </TouchableHighlight>
+            <Text style={inputStyles.value}>{this.props.value.toFixed(1)}</Text>
+            <TouchableHighlight style={inputStyles.touch}>
+            <Text style={[inputStyles.button, disColors.button]}>+</Text>
+            </TouchableHighlight>
+          </View>
+        );
+      }
+      else {
+        return (
+          <View style={[inputStyles.theinput, enColors.theinput]}>
+            <TouchableHighlight style={inputStyles.touch} onPress={this.onDown} onPressIn={this.onDownIn} onPressOut={this.onDownOut}>
+              <Text style={[inputStyles.button, enColors.button]}>-</Text>
+            </TouchableHighlight>
+            <Text style={inputStyles.value}>{this.props.value.toFixed(1)}</Text>
+            <TouchableHighlight style={inputStyles.touch} onPress={this.onUp}  onPressIn={this.onUpIn} onPressOut={this.onUpOut}>
+              <Text style={[inputStyles.button, enColors.button]}>+</Text>
+            </TouchableHighlight>
+          </View>
+        );    
+      }
   }
 }
 
@@ -188,8 +331,7 @@ class ActiveTraining extends Component {
 
     this.startRace = this.startRace.bind(this);
     this.stopRace = this.stopRace.bind(this);
-    this.onSpeedUp = this.onSpeedUp.bind(this);
-    this.onSpeedDown = this.onSpeedDown.bind(this);
+    this.onSpeedChanged = this.onSpeedChanged.bind(this);
 
     this.styles = StyleSheet.create({
       theblock: {
@@ -355,73 +497,21 @@ class ActiveTraining extends Component {
       raceDistanceColor.color = "white";
     }
 
-    var speedInput = this.getSpeedInput();
-
     return (
       <View style={this.styles.ctrls_row}>
-        <View style={[this.styles.ctrl_elem, {alignItems:'center'}]}>
-          {speedInput}
-        </View>
         <Text style={[this.styles.ctrl_elem, raceTimeColor]}>{SecondsToTimeFormat(this.state.time)}</Text>
+        <View style={[this.styles.ctrl_elem, {alignItems:'center'}]}>
+          <SpeedInput value={this.state.speed} step={0.1} onValueChanged={this.onSpeedChanged} disabled={this.props.runningStatus === "walking" ? false : true} />
+        </View>
         <Text style={[this.styles.ctrl_elem, raceDistanceColor]}>{this.state.distance}</Text>
       </View>
     );
   }
 
-  getSpeedInput() {
-    var inputStyles = StyleSheet.create({
-        theinput: {
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderStyle: 'solid',
-          borderWidth: 1,
-          borderColor: 'white',
-          padding: 0
-        },
-        touch: {
-          width: 30
-        },
-        button: {
-          textAlign: 'center',
-          backgroundColor: '#455A64',
-          fontSize: 20,
-          color: 'white',
-        },
-        value: {
-          textAlign: 'center',
-          fontSize: 20,
-          color: 'white',
-          marginLeft: 5,
-          marginRight: 5
-        }   
-      });
-
-    return (
-      <View style={inputStyles.theinput}>
-        <TouchableHighlight style={inputStyles.touch} onPress={this.onSpeedDown}>
-          <Text style={inputStyles.button}>-</Text>
-        </TouchableHighlight>
-        <Text style={inputStyles.value}>{this.state.speed.toFixed(1)}</Text>
-        <TouchableHighlight style={inputStyles.touch} onPress={this.onSpeedUp}>
-          <Text style={inputStyles.button}>+</Text>
-        </TouchableHighlight>
-      </View>
-    );
-  }
-
-  onSpeedUp () {
-    var newSpeed = Math.round((this.state.speed + 0.1) * 10) / 10;
+  onSpeedChanged (value) {
     this.setState({
-      speed: newSpeed
-    });
-  }
-
-  onSpeedDown () {
-    var newSpeed = Math.round((this.state.speed - 0.1) * 10) / 10;
-    this.setState({
-      speed: newSpeed
-    });
+      speed: value
+    });    
   }
 
   getButtonRow () {
@@ -506,8 +596,8 @@ class ActiveTraining extends Component {
           <Text style={this.styles.ctrl_elem}>{this.props.runningDistance}</Text>
         </View>
         <View style={this.styles.labels_row}>
-          <Text style={this.styles.label}>Race Speed</Text>
           <Text style={this.styles.label}>Race Time</Text>
+          <Text style={this.styles.label}>Race Speed</Text>
           <Text style={this.styles.label}>Race Distance</Text>
         </View>
         {raceDateRow}
@@ -598,7 +688,6 @@ export default class App extends Component {
   }
 
   addRace(raceData) {
-
     var updatedRaces = this.state.races.slice();
     updatedRaces.push(raceData);
     var updatedRunningTime = this.state.runningTime + raceData.time;
@@ -615,7 +704,7 @@ export default class App extends Component {
     this.setState({
       status: "pending_store"
     });
-}
+  }
 
   storeTaraining () {
     this.setState({
