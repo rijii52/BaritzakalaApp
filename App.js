@@ -1,11 +1,16 @@
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image } from 'react-native';
+import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image, TextInput, Modal } from 'react-native';
 
 const RaceTimeQuant = 15;
 
 function SecondsToTimeFormat(seconds) {
   if (seconds.isNull || seconds.isNaN)
     return "";
+
+  var sHours = parseInt(seconds / 3600, 10).toString();
+  while (sHours.length < 2) {
+    sHours = '0' + sHours;
+  }
 
   var sMinutes = parseInt(seconds / 60, 10).toString();
   while (sMinutes.length < 2) {
@@ -17,7 +22,10 @@ function SecondsToTimeFormat(seconds) {
     sSeconds = '0' + sSeconds;
   }
 
-  return sMinutes + ":" + sSeconds;
+  if (seconds >= 3600)
+    return sHours + ":" + sMinutes + ":" + sSeconds;  
+  else
+    return sMinutes + ":" + sSeconds;
 }
 
 class TopControlBlock extends Component {
@@ -111,11 +119,29 @@ class TopControlBlock extends Component {
           );
         }
 
+      case "pending_distance":
+        return (
+          <TouchableHighlight style={this.styles.touch} underlayColor={'transparent'}>
+            <View style={[this.styles.button, this.styles.button_dis]}>
+              <Text style={[this.styles.buttontext, this.styles.buttontext_dis]}>Store Training</Text>
+            </View>
+          </TouchableHighlight>
+        );
+
       case "pending_store":
         return (
           <TouchableHighlight onPress={this.onStoreTaraining} style={this.styles.touch} underlayColor={'transparent'}>
             <View style={[this.styles.button, this.styles.button_en]}>
               <Text style={[this.styles.buttontext, this.styles.buttontext_en]}>Store Training</Text>
+            </View>
+          </TouchableHighlight>
+        );
+
+      case "storing":
+        return (
+          <TouchableHighlight style={this.styles.touch} underlayColor={'transparent'}>
+            <View style={[this.styles.button, this.styles.button_dis]}>
+              <Text style={[this.styles.buttontext, this.styles.buttontext_dis]}>Storing...</Text>
             </View>
           </TouchableHighlight>
         );
@@ -319,6 +345,84 @@ class SpeedInput extends Component {
   }
 }
 
+class RacesList extends Component {
+  constructor(props) {
+    super(props);
+
+    this.styles = StyleSheet.create({
+      racelist: {
+        width: '100%'
+      },
+      racelist_row: {
+        flexDirection: 'row',
+        justifyContent: 'center'        
+      },
+      racelist_hd: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 14,
+        color: 'white',
+        marginBottom: 6
+      },
+      raceslist_td: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'white',
+        marginBottom: 4
+      },
+      noracesyet: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 16,
+        color: 'lightgray',
+        marginTop: 20
+      }
+    });
+  }
+
+  getRacesListContent () {
+    if (this.props.races.length > 0) {
+
+      const racesList = this.props.races.map((element) =>
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.start)}</Text>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.stop)}</Text>
+          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.time)}</Text>
+          <Text style={this.styles.raceslist_td}>{element.speed.toFixed(1)}</Text>
+          <Text style={this.styles.raceslist_td}>{element.distance}</Text>
+        </View>
+      );
+      
+      return racesList;
+    }
+    else {
+      return ( 
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.noracesyet}>There was no races yet</Text>
+        </View>
+      );
+    }
+  }
+
+  render () {
+    var lisContent = this.getRacesListContent();
+    
+    return (
+      <View style={this.styles.racelist}>
+        <View style={this.styles.racelist_row}>
+          <Text style={this.styles.racelist_hd}>Start</Text>
+          <Text style={this.styles.racelist_hd}>Stop</Text>
+          <Text style={this.styles.racelist_hd}>Time</Text>
+          <Text style={this.styles.racelist_hd}>Speed</Text>
+          <Text style={this.styles.racelist_hd}>Distance</Text>
+        </View>
+        {lisContent}
+      </View>
+    );    
+  }
+}
+
 class ActiveTraining extends Component {
   constructor(props) {
     super(props);
@@ -385,34 +489,6 @@ class ActiveTraining extends Component {
       buttontext: {
         fontSize: 20,
         color: 'white',
-      },
-      racelist: {
-        width: '100%'
-      },
-      racelist_row: {
-        flexDirection: 'row',
-        justifyContent: 'center'        
-      },
-      racelist_hd: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 14,
-        color: 'white',
-        marginBottom: 6
-      },
-      raceslist_td: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 16,
-        color: 'white',
-        marginBottom: 4
-      },
-      noracesyet: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 16,
-        color: 'lightgray',
-        marginTop: 20
       }
     });
   }
@@ -539,51 +615,9 @@ class ActiveTraining extends Component {
     }
   }
 
-  getRacesList() {
-    var lisContent = this.getRacesListContent();
-    
-    return (
-      <View style={this.styles.racelist}>
-        <View style={this.styles.racelist_row}>
-          <Text style={this.styles.racelist_hd}>Start</Text>
-          <Text style={this.styles.racelist_hd}>Stop</Text>
-          <Text style={this.styles.racelist_hd}>Time</Text>
-          <Text style={this.styles.racelist_hd}>Speed</Text>
-          <Text style={this.styles.racelist_hd}>Distance</Text>
-        </View>
-        {lisContent}
-      </View>
-    );
-  }
-
-  getRacesListContent () {
-    if (this.props.races.length > 0) {
-
-      const racesList = this.props.races.map((element) =>
-        <View style={this.styles.racelist_row}>
-          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.start)}</Text>
-          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.stop)}</Text>
-          <Text style={this.styles.raceslist_td}>{SecondsToTimeFormat(element.time)}</Text>
-          <Text style={this.styles.raceslist_td}>{element.speed.toFixed(1)}</Text>
-          <Text style={this.styles.raceslist_td}>{element.distance}</Text>
-        </View>
-      );
-      
-      return racesList;
-    }
-    else {
-      return ( 
-        <View style={this.styles.racelist_row}>
-          <Text style={this.styles.noracesyet}>There was no races yet</Text>
-        </View>
-      );
-    }
-  }
-
   render () {
     var raceDateRow = this.getRaceDataRow();
     var buttonRow = this.getButtonRow();
-    var racesList = this.getRacesList();
 
     return (
       <View style={this.styles.theblock}>
@@ -602,7 +636,7 @@ class ActiveTraining extends Component {
         </View>
         {raceDateRow}
         {buttonRow}
-        {racesList}
+        <RacesList races={this.props.races} />
       </View>
     );
   }
@@ -612,35 +646,110 @@ class FinishedTraining extends Component {
   constructor(props) {
     super(props);
 
+    var maxRunningTime = 0;
+    var maxRunningDistance = 0;
+    this.props.races.forEach(element => {
+      if (element.time > maxRunningTime)
+        maxRunningTime = element.time;
+      if (element.time * element.speed > maxRunningDistance)
+        maxRunningDistance = Math.round(element.time * element.speed * 1000 / 3600);
+    });
+
+    this.onTrainingDistanceChanged = this.onTrainingDistanceChanged.bind(this);
+
+    this.state = {
+      maxRunningTime: maxRunningTime,
+      maxRunningDistance: maxRunningDistance
+    };
+
     this.styles = StyleSheet.create({
       theblock: {
-        flex: 5,
+        flex: 6,
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+      },
+      labels_row: {
+        flexDirection: 'row',
+        justifyContent: 'center'
+      },
+      label: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 14,
+        marginTop: 24,
+        marginBottom: 5,
+        color: 'white'
+      },
+      ctrls_row: {
+        flexDirection: 'row',
+        justifyContent: 'center'
+      },
+      ctrl_elem: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 20,
+        color: 'white'
+      },
+      distinput_holder: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center'
       },
-      finishtext: {
+      distinput: {
+        width: 70,
+        padding: 1,
         fontSize: 20,
-        color: 'white'
+        backgroundColor: 'white',
+        color: 'black',
+        borderStyle: 'solid',
+        borderWidth: 1,
+        borderColor: '#263238'
       }
     });
+  }
+
+  onTrainingDistanceChanged (value) {
+    this.props.setTrainingDistance(parseInt(value));
   }
 
   render () {
     return (
       <View style={this.styles.theblock}>
-        <Text style={this.styles.finishtext}>training was finished</Text>
+        <View style={this.styles.labels_row}>
+          <Text style={this.styles.label}>Max Running</Text>
+          <Text style={this.styles.label}>Total Running</Text>
+          <Text style={this.styles.label}>Running Distance</Text>
+        </View>
+        <View style={this.styles.ctrls_row}>
+          <Text style={this.styles.ctrl_elem}>{SecondsToTimeFormat(this.state.maxRunningTime)}</Text>
+          <Text style={this.styles.ctrl_elem}>{SecondsToTimeFormat(this.props.runningTime)}</Text>
+          <Text style={this.styles.ctrl_elem}>{this.props.runningDistance}</Text>
+        </View>
+        <View style={this.styles.labels_row}>
+          <Text style={this.styles.label}>Training Time</Text>
+          <Text style={this.styles.label}>Training Distance</Text>
+        </View>
+        <View style={[this.styles.ctrls_row, {marginBottom:20}]}>
+          <Text style={this.styles.ctrl_elem}>{SecondsToTimeFormat(this.props.trainingTime)}</Text>
+          <View style={this.styles.distinput_holder}>
+            <TextInput keyboardType='numeric' maxLength={5} style={this.styles.distinput} 
+              underlineColorAndroid='transparent' onChangeText={this.onTrainingDistanceChanged} />
+          </View>
+        </View>        
+        <RacesList races={this.props.races} />
       </View>
     );
   }
 }
 
 export default class App extends Component {
-
   constructor(props) {
     super(props);
 
     this.state = {
-      status: "initial"
+      status: "initial",
+      storeErrorVisible: false
     };
 
     this.startTaraining = this.startTaraining.bind(this);
@@ -648,6 +757,8 @@ export default class App extends Component {
     this.finishTaraining = this.finishTaraining.bind(this);
     this.storeTaraining = this.storeTaraining.bind(this);
     this.addRace = this.addRace.bind(this);
+    this.setTrainingDistance = this.setTrainingDistance.bind(this);
+    this.closeStoreErrorModal = this.closeStoreErrorModal.bind(this);
 
     this.styles = StyleSheet.create({
       appcontainer: {
@@ -655,6 +766,42 @@ export default class App extends Component {
         justifyContent: 'center',
         alignItems: 'stretch',
         backgroundColor: '#607D8B'
+      },
+      errormodal: {
+        flex: 1,
+        backgroundColor:'rgba(255,255,255,0.6)',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        padding: 20
+      },
+      errormodal_ctn: {
+        alignItems: 'center',
+        backgroundColor: '#ECEFF1',
+        borderStyle: 'solid',
+        borderWidth: 1,
+        borderColor: 'black',
+        padding: 20
+      },
+      errormodal_header: {
+        marginTop: 5,
+        color: 'red',
+        textAlign: 'center'
+      },
+      errormodal_message: {
+        marginTop: 5,
+        color: 'black',
+        textAlign: 'center'
+      },
+      errormodal_button: {
+        width: 120,
+        textAlign: 'center',
+        marginTop: 16,
+        backgroundColor: '#455A64',
+        color: 'white',
+        borderStyle: 'solid',
+        borderColor: 'black',
+        borderWidth: 1,
+        padding: 10
       }
     });
   }
@@ -702,12 +849,79 @@ export default class App extends Component {
   finishTaraining () {
     clearInterval(this.timeID);
     this.setState({
-      status: "pending_store"
+      status: "pending_distance",
+      trainingDistance: 0
+    });
+  }
+
+  setTrainingDistance (value) {
+    this.setState({
+      status: "pending_store",
+      trainingDistance: value
     });
   }
 
   storeTaraining () {
     this.setState({
+      status: "storing"
+    });
+
+    this.callStoreTraining();
+  }
+
+  callStoreTraining = async () => {
+    var Today = Date.now();
+    var maxRunningTime = 0;
+    var maxRunningDistance = 0;
+    this.state.races.forEach(element => {
+      if (element.time > maxRunningTime)
+        maxRunningTime = element.time;
+      if (element.time * element.speed > maxRunningDistance)
+        maxRunningDistance = Math.round(element.time * element.speed * 1000 / 3600);
+    });
+
+    var stateToStore = {
+      TrainingDate: Today,
+      MaxRunningTime: maxRunningTime,
+      MaxRunningDistance: maxRunningDistance,
+      TotalRunningTime: this.state.runningTime,
+      TotalRunningDistance: this.state.runningDistance,
+      TrainingTime: this.state.trainingTime,
+      TrainingDistance: this.state.trainingDistance, 
+      races: this.state.races
+    };
+
+    // const response = await fetch('https://baritzakala.herokuapp.com/api/storetraining', {
+    /*
+    const response = await fetch('http://not-exists-vabshe.com/', {
+      method: 'post',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(stateToStore)
+    });
+    
+    const body = await response.json();
+    if (response.status === 200) {
+      this.setState({
+        status: "initial"
+      });
+    }
+    else {
+      this.setState({
+        storeErrorVisible: true,
+        storeErrorMessage: body.message
+      });
+    }
+    */
+
+    this.setState({
+      storeErrorVisible: true,
+      storeErrorMessage: 'Some error message'
+    });
+  }
+
+  closeStoreErrorModal () {
+    this.setState({
+      storeErrorVisible: false,
       status: "initial"
     });
   }
@@ -727,9 +941,14 @@ export default class App extends Component {
             updateRunningStatus={this.updateRunningStatus} addRace={this.addRace} />
         );
 
+      case "pending_distance":
       case "pending_store":
+      case "storing":
         return (
-          <FinishedTraining />
+          <FinishedTraining status={this.state.status} trainingTime={this.state.trainingTime} 
+          trainingDistance={this.state.trainingDistance} runningTime={this.state.runningTime} 
+          runningDistance={this.state.runningDistance} races={this.state.races}
+          setTrainingDistance={this.setTrainingDistance} />
         );
 
       default:
@@ -747,6 +966,17 @@ export default class App extends Component {
         <TopControlBlock status={this.state.status} runningStatus={this.state.runningStatus} 
           startTaraining={this.startTaraining} finishTaraining={this.finishTaraining} storeTaraining={this.storeTaraining} />
         {contentBlock}
+        <Modal animationType="fade" transparent={true} presentationStyle={'overFullScreen'} visible={this.state.storeErrorVisible}>
+          <View style={this.styles.errormodal}>
+            <View style={this.styles.errormodal_ctn}>
+              <Text style={this.styles.errormodal_header}>ERROR</Text>
+              <Text style={this.styles.errormodal_message}>{this.state.storeErrorMessage}</Text>
+              <TouchableHighlight onPress={this.closeStoreErrorModal}>
+                <Text style={this.styles.errormodal_button}>CLOSE</Text>
+              </TouchableHighlight>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
