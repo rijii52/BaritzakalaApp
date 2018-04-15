@@ -743,13 +743,128 @@ class FinishedTraining extends Component {
   }
 }
 
+class StoreResultDialog extends Component {
+  constructor(props) {
+    super(props);
+
+    this.onOK = this.onOK.bind(this);
+    this.onRetry = this.onRetry.bind(this);
+    this.onCancel = this.onCancel.bind(this);
+
+    this.styles = StyleSheet.create({
+      themodal: {
+        flex: 1,
+        backgroundColor:'rgba(255,255,255,0.6)',
+        justifyContent: 'flex-start',
+        alignItems: 'center'
+      },
+      modal_ctn: {
+        width: '80%',
+        marginTop: 180,
+        alignItems: 'center',
+        backgroundColor: '#ECEFF1',
+        borderStyle: 'solid',
+        borderWidth: 1,
+        borderColor: 'black',
+        padding: 20
+      },
+      modal_header_ok: {
+        marginTop: 5,
+        color: 'green',
+        textAlign: 'center'
+      },
+      modal_header_error: {
+        marginTop: 5,
+        color: 'red',
+        textAlign: 'center'
+      },      
+      modal_message: {
+        marginTop: 5,
+        color: 'black',
+        textAlign: 'center'
+      },
+      modal_buttons_block: {
+        flexDirection: 'row',
+        justifyContent: 'center'        
+      },
+      modal_button: {
+        width: 80,
+        textAlign: 'center',
+        marginTop: 16,
+        backgroundColor: '#455A64',
+        color: 'white',
+        borderStyle: 'solid',
+        borderColor: 'black',
+        borderWidth: 1,
+        padding: 8
+      },
+      modal_buttonspace: {
+        width: 30
+      }
+    });    
+  }
+
+  onOK () {
+    this.props.closeStoreResultDialog();
+    this.props.backToWelcome();
+  }
+
+  onRetry () {
+    this.props.closeStoreResultDialog();
+    this.props.backToPendingStore();
+  }
+
+  onCancel () {
+    this.props.closeStoreResultDialog();
+    this.props.backToWelcome();
+  }
+
+  render () {
+    if (this.props.storeResult) {
+      return (
+        <Modal animationType="fade" transparent={true} presentationStyle={'overFullScreen'} visible={this.props.visible}>
+          <View style={this.styles.themodal}>
+            <View style={this.styles.modal_ctn}>
+              <Text style={this.styles.modal_header_ok}>Training was successfully stored{'\n'}at Baritzakala server</Text>
+              <TouchableHighlight onPress={this.onOK}>
+                <Text style={this.styles.modal_button}>OK</Text>
+              </TouchableHighlight>
+            </View>
+          </View>
+        </Modal>  
+      );
+    }
+    else {
+      return (
+        <Modal animationType="fade" transparent={true} presentationStyle={'overFullScreen'} visible={this.props.visible}>
+          <View style={this.styles.themodal}>
+            <View style={this.styles.modal_ctn}>
+              <Text style={this.styles.modal_header_error}>Training store was failed</Text>
+              <Text style={this.styles.modal_message}>{this.props.storeResultDialogMessage}</Text>
+              <View style={this.styles.modal_buttons_block}>
+                <TouchableHighlight onPress={this.onRetry}>
+                  <Text style={this.styles.modal_button}>Retry</Text>
+                </TouchableHighlight>
+                <View style={this.styles.modal_buttonspace}></View>
+                <TouchableHighlight onPress={this.onCancel}>
+                  <Text style={this.styles.modal_button}>Cancel</Text>
+                </TouchableHighlight>
+              </View>
+            </View>
+          </View>
+        </Modal>  
+      );
+    }
+  }
+}
+
 export default class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
       status: "initial",
-      storeErrorVisible: false
+      storeResultDialogVisible: false
     };
 
     this.startTaraining = this.startTaraining.bind(this);
@@ -758,7 +873,9 @@ export default class App extends Component {
     this.storeTaraining = this.storeTaraining.bind(this);
     this.addRace = this.addRace.bind(this);
     this.setTrainingDistance = this.setTrainingDistance.bind(this);
-    this.closeStoreErrorModal = this.closeStoreErrorModal.bind(this);
+    this.closeStoreResultDialog = this.closeStoreResultDialog.bind(this);
+    this.backToWelcome = this.backToWelcome.bind(this);
+    this.backToPendingStore = this.backToPendingStore.bind(this);
 
     this.styles = StyleSheet.create({
       appcontainer: {
@@ -766,42 +883,6 @@ export default class App extends Component {
         justifyContent: 'center',
         alignItems: 'stretch',
         backgroundColor: '#607D8B'
-      },
-      errormodal: {
-        flex: 1,
-        backgroundColor:'rgba(255,255,255,0.6)',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        padding: 20
-      },
-      errormodal_ctn: {
-        alignItems: 'center',
-        backgroundColor: '#ECEFF1',
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: 'black',
-        padding: 20
-      },
-      errormodal_header: {
-        marginTop: 5,
-        color: 'red',
-        textAlign: 'center'
-      },
-      errormodal_message: {
-        marginTop: 5,
-        color: 'black',
-        textAlign: 'center'
-      },
-      errormodal_button: {
-        width: 120,
-        textAlign: 'center',
-        marginTop: 16,
-        backgroundColor: '#455A64',
-        color: 'white',
-        borderStyle: 'solid',
-        borderColor: 'black',
-        borderWidth: 1,
-        padding: 10
       }
     });
   }
@@ -914,16 +995,28 @@ export default class App extends Component {
     */
 
     this.setState({
-      storeErrorVisible: true,
-      storeErrorMessage: 'Some error message'
+      storeResultDialogVisible: true,
+      storeResult: true
+      // storeResultDialogMessage: 'Some error message'
     });
   }
 
-  closeStoreErrorModal () {
+  closeStoreResultDialog () {
     this.setState({
-      storeErrorVisible: false,
+      storeResultDialogVisible: false
+    });
+  }
+
+  backToWelcome () {
+    this.setState({
       status: "initial"
     });
+  }
+
+  backToPendingStore () {
+    this.setState({
+      status: "pending_store"
+    });    
   }
 
   getContentBlock () {
@@ -966,17 +1059,9 @@ export default class App extends Component {
         <TopControlBlock status={this.state.status} runningStatus={this.state.runningStatus} 
           startTaraining={this.startTaraining} finishTaraining={this.finishTaraining} storeTaraining={this.storeTaraining} />
         {contentBlock}
-        <Modal animationType="fade" transparent={true} presentationStyle={'overFullScreen'} visible={this.state.storeErrorVisible}>
-          <View style={this.styles.errormodal}>
-            <View style={this.styles.errormodal_ctn}>
-              <Text style={this.styles.errormodal_header}>ERROR</Text>
-              <Text style={this.styles.errormodal_message}>{this.state.storeErrorMessage}</Text>
-              <TouchableHighlight onPress={this.closeStoreErrorModal}>
-                <Text style={this.styles.errormodal_button}>CLOSE</Text>
-              </TouchableHighlight>
-            </View>
-          </View>
-        </Modal>
+        <StoreResultDialog visible={this.state.storeResultDialogVisible} storeResult={this.state.storeResult} 
+          storeResultDialogMessage={this.state.storeResultDialogMessage} 
+          closeStoreResultDialog={this.closeStoreResultDialog} backToWelcome={this.backToWelcome} backToPendingStore={this.backToPendingStore} />
       </View>
     );
   }
