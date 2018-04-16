@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image, TextInput, Modal } from 'react-native';
+import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image, TextInput, Modal, ActivityIndicator } from 'react-native';
 
-const RaceTimeQuant = 15;
+const RaceTimeQuant = 10;
 
 function SecondsToTimeFormat(seconds) {
   if (seconds.isNull || seconds.isNaN)
@@ -12,7 +12,7 @@ function SecondsToTimeFormat(seconds) {
     sHours = '0' + sHours;
   }
 
-  var sMinutes = parseInt(seconds / 60, 10).toString();
+  var sMinutes = parseInt(seconds % 3600 / 60, 10).toString();
   while (sMinutes.length < 2) {
     sMinutes = '0' + sMinutes;
   }
@@ -72,6 +72,16 @@ class TopControlBlock extends Component {
       },
       buttontext_dis: {
         color: 'gray',
+      },
+      progress_hldr: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
+      },
+      progress_text: {
+        fontSize: 20,
+        color: 'white',
+        padding: 20
       }
     });
   }
@@ -139,11 +149,10 @@ class TopControlBlock extends Component {
 
       case "storing":
         return (
-          <TouchableHighlight style={this.styles.touch} underlayColor={'transparent'}>
-            <View style={[this.styles.button, this.styles.button_dis]}>
-              <Text style={[this.styles.buttontext, this.styles.buttontext_dis]}>Storing...</Text>
-            </View>
-          </TouchableHighlight>
+          <View style={this.styles.progress_hldr}>
+            <ActivityIndicator color={'white'} size={'small'} />
+            <Text style={this.styles.progress_text}>Storing...</Text>
+          </View>
         );
 
       default:
@@ -972,33 +981,46 @@ export default class App extends Component {
       races: this.state.races
     };
 
-    // const response = await fetch('https://baritzakala.herokuapp.com/api/storetraining', {
-    /*
-    const response = await fetch('http://not-exists-vabshe.com/', {
-      method: 'post',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(stateToStore)
-    });
-    
-    const body = await response.json();
-    if (response.status === 200) {
-      this.setState({
-        status: "initial"
+    try {
+      await fetch('https://baritzakala.herokuapp.com/api/storetraining', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(stateToStore)
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json()
+          .then((responseData) => {
+            // responseData contains json object with actual server response,
+            // in this case it should be {result:'ok'}
+            this.setState({
+              storeResultDialogVisible: true,
+              storeResult: true
+            });
+          });
+        }
+        else {
+          this.setState({
+            storeResultDialogVisible: true,
+            storeResult: false,
+            storeResultDialogMessage: 'Response is NOT ok]'
+          });  
+        }
+      }).catch(error => {
+        this.setState({
+          storeResultDialogVisible: true,
+          storeResult: false,
+          storeResultDialogMessage: 'Catch: [' + error + ']'
+        });
       });
     }
-    else {
+    catch(error) {
       this.setState({
-        storeErrorVisible: true,
-        storeErrorMessage: body.message
+        storeResultDialogVisible: true,
+        storeResult: false,
+        storeResultDialogMessage: 'Eexception: [' + error.message + ']'
       });
     }
-    */
-
-    this.setState({
-      storeResultDialogVisible: true,
-      storeResult: true
-      // storeResultDialogMessage: 'Some error message'
-    });
   }
 
   closeStoreResultDialog () {
