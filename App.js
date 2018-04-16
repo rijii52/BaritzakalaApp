@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Platform, StyleSheet, Text, View, TouchableHighlight, StatusBar, Image, TextInput, Modal, ActivityIndicator } from 'react-native';
 
-const RaceTimeQuant = 10;
+const RaceTimeQuant = 30;
 
 function SecondsToTimeFormat(seconds) {
   if (seconds.isNull || seconds.isNaN)
@@ -80,7 +80,7 @@ class TopControlBlock extends Component {
       },
       progress_text: {
         fontSize: 20,
-        color: 'white',
+        color: 'lime',
         padding: 20
       }
     });
@@ -150,7 +150,7 @@ class TopControlBlock extends Component {
       case "storing":
         return (
           <View style={this.styles.progress_hldr}>
-            <ActivityIndicator color={'white'} size={'small'} />
+            <ActivityIndicator color={'lime'} size={'small'} />
             <Text style={this.styles.progress_text}>Storing...</Text>
           </View>
         );
@@ -438,7 +438,7 @@ class ActiveTraining extends Component {
 
     this.state = {
       time: 0,
-      speed: 8.6,
+      speed: 8.0,
       distance: 0
     };
 
@@ -528,16 +528,20 @@ class ActiveTraining extends Component {
 
     // if race was actually started then store the race, otherwise cancel it
     if (this.props.runningStatus === "running") {
-      var stoptime = this.state.start + this.state.time;
-      var distance = parseInt(this.state.speed * 1000 / 3600 * this.state.time, 10);
-      
-      this.props.addRace({
-        start: this.state.start,
-        stop: stoptime,
-        time: this.state.time,
-        speed: this.state.speed,
-        distance: distance
-      });
+      // quantize the time and check that it is greater than zero
+      var quantizedTime = parseInt(this.state.time / RaceTimeQuant) * RaceTimeQuant;
+      if (quantizedTime > 0) {
+        var stoptime = this.state.start + quantizedTime;
+        var distance = parseInt(this.state.speed * 1000 / 3600 * quantizedTime, 10);
+        
+        this.props.addRace({
+          start: this.state.start,
+          stop: stoptime,
+          time: quantizedTime,
+          speed: this.state.speed,
+          distance: distance
+        });  
+      }
     }
 
     this.props.updateRunningStatus("walking");
