@@ -503,15 +503,14 @@ class ActiveTraining extends Component {
   }
 
   startRace () {
-    let startRaceTime = 0;
-    while (startRaceTime <= this.props.trainingTime) {
-      startRaceTime += RaceTimeQuant;
-    }
-    let timeAhead = startRaceTime - this.props.trainingTime;
+    let startRaceTime = Math.round(this.props.trainingTime / RaceTimeQuant) * RaceTimeQuant + RaceTimeQuant;
+    let phisicalStartRaceTime = this.props.physicalStartTime + startRaceTime * 1000;
 
     this.props.updateRunningStatus("starting");
 
+    var timeAhead = Math.round((phisicalStartRaceTime - Date.now()) / 1000);
     this.setState({
+      phisicalStartRaceTime: phisicalStartRaceTime,
       start: startRaceTime,
       time: timeAhead,
       distance: 0
@@ -553,21 +552,27 @@ class ActiveTraining extends Component {
   }
 
   raceTick () {
-    if (this.props.runningStatus === "starting") {
-      this.setState((prevState, props) => ({
-        time: prevState.time - 1
-      }));
+    // until phisicalStartRaceTime acheived update time ahead, then switch to mode 'running'
+    if (this.props.runningStatus === "starting") {  
+      var timeAhead = Math.round((this.state.phisicalStartRaceTime - Date.now()) / 1000);
+      if (timeAhead > 0) {
+        this.setState({
+          time: timeAhead
+        });
+      }
+      else {  // switch to running
+        this.props.updateRunningStatus("running");
+      }
     }
-    else {
-      var distance = parseInt(this.state.speed * 1000 / 3600 * (this.state.time + 1), 10);
-      this.setState((prevState, props) => ({
-        time: prevState.time + 1,
+    
+    // when actually running update actual time and distance
+    if (this.props.runningStatus === "running") {  
+      var time = Math.round((Date.now() - this.state.phisicalStartRaceTime) / 1000);
+      var distance = parseInt(this.state.speed * 1000 / 3600 * time, 10);
+      this.setState({
+        time: time,
         distance: distance
-      }));
-    }
-
-    if (this.state.time === 0) {
-      this.props.updateRunningStatus("running");
+      });
     }
   }
 
@@ -904,6 +909,7 @@ export default class App extends Component {
     this.setState({
       status: "training",
       runningStatus: "walking",
+      physicalStartTime: Date.now(),
       trainingTime: 0,
       runningTime: 0,
       runningDistance: 0,
@@ -917,9 +923,9 @@ export default class App extends Component {
   }
 
   trainingTick () {
-    this.setState((prevState, props) => ({
-      trainingTime: prevState.trainingTime + 1
-    }));
+    this.setState({
+      trainingTime: Math.round((Date.now() - this.state.physicalStartTime) / 1000)
+    });
   }
 
   updateRunningStatus (runningStatus) {
@@ -1054,8 +1060,9 @@ export default class App extends Component {
         
       case "training":
         return (
-          <ActiveTraining status={this.state.status} trainingTime={this.state.trainingTime}
-            runningTime={this.state.runningTime} runningDistance={this.state.runningDistance} 
+          <ActiveTraining status={this.state.status} physicalStartTime={this.state.physicalStartTime}
+            trainingTime={this.state.trainingTime} runningTime={this.state.runningTime} 
+            runningDistance={this.state.runningDistance} 
             runningStatus={this.state.runningStatus} races={this.state.races} 
             updateRunningStatus={this.updateRunningStatus} addRace={this.addRace} />
         );
