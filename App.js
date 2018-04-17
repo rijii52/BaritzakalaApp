@@ -225,7 +225,7 @@ class SpeedInput extends Component {
   }
 
   valueUp () {
-    var newValue = Math.floor((this.props.value + this.props.step) * 10) / 10;
+    var newValue = Math.round((this.props.value + this.props.step) * 10) / 10;
     this.props.onValueChanged(newValue);
   }
 
