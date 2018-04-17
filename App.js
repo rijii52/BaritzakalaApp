@@ -225,7 +225,7 @@ class SpeedInput extends Component {
   }
 
   valueUp () {
-    var newValue = Math.round((this.props.value + this.props.step) * 10) / 10;
+    var newValue = Math.floor((this.props.value + this.props.step) * 10) / 10;
     this.props.onValueChanged(newValue);
   }
 
@@ -253,7 +253,7 @@ class SpeedInput extends Component {
   }
 
   valueDown () {
-    var newValue = Math.round((this.props.value - this.props.step) * 10) / 10;
+    var newValue = Math.floor((this.props.value - this.props.step) * 10) / 10;
     this.props.onValueChanged(newValue);
   }
   
@@ -503,7 +503,7 @@ class ActiveTraining extends Component {
   }
 
   startRace () {
-    let startRaceTime = Math.round(this.props.trainingTime / RaceTimeQuant) * RaceTimeQuant + RaceTimeQuant;
+    let startRaceTime = Math.floor(this.props.trainingTime / RaceTimeQuant) * RaceTimeQuant + RaceTimeQuant;
     let phisicalStartRaceTime = this.props.physicalStartTime + startRaceTime * 1000;
 
     this.props.updateRunningStatus("starting");
@@ -567,7 +567,7 @@ class ActiveTraining extends Component {
     
     // when actually running update actual time and distance
     if (this.props.runningStatus === "running") {  
-      var time = Math.round((Date.now() - this.state.phisicalStartRaceTime) / 1000);
+      var time = Math.floor((Date.now() - this.state.phisicalStartRaceTime) / 1000);
       var distance = parseInt(this.state.speed * 1000 / 3600 * time, 10);
       this.setState({
         time: time,
@@ -670,7 +670,7 @@ class FinishedTraining extends Component {
       if (element.time > maxRunningTime)
         maxRunningTime = element.time;
       if (element.time * element.speed > maxRunningDistance)
-        maxRunningDistance = Math.round(element.time * element.speed * 1000 / 3600);
+        maxRunningDistance = Math.floor(element.time * element.speed * 1000 / 3600);
     });
 
     this.onTrainingDistanceChanged = this.onTrainingDistanceChanged.bind(this);
@@ -924,7 +924,7 @@ export default class App extends Component {
 
   trainingTick () {
     this.setState({
-      trainingTime: Math.round((Date.now() - this.state.physicalStartTime) / 1000)
+      trainingTime: Math.floor((Date.now() - this.state.physicalStartTime) / 1000)
     });
   }
 
@@ -977,7 +977,7 @@ export default class App extends Component {
       if (element.time > maxRunningTime)
         maxRunningTime = element.time;
       if (element.time * element.speed > maxRunningDistance)
-        maxRunningDistance = Math.round(element.time * element.speed * 1000 / 3600);
+        maxRunningDistance = Math.floor(element.time * element.speed * 1000 / 3600);
     });
 
     var stateToStore = {
